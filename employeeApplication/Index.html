@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <!--vue.js-->
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>  
+    <!-- 引入组件库 -->
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <style type="text/css">
+      #wrapper{
+         left:5%;
+         right:5%;
+          position:absolute; 
+          top:0px;
+          bottom:0px;
+      }      
+    </style>
+  </head>
+  <body>
+    <div id="app"> 
+       <div id="wrapper">
+        <img src=""  />
+        <div>
+           <h1>本人请假/外出申请情况 <el-button type="primary" round style="position:absolute;right:0px" @click="addData">申请休假</el-button></h1> 
+        </div>
+        <div class="wraper-output">
+            <el-table
+              v-loading="loading"
+              element-loading-text="拼命加载中"
+              element-loading-spinner="el-icon-loading"
+              element-loading-background="rgba(0, 0, 0, 0.8)"
+              stripe
+              :data="appData.data"   
+              height=680
+              border
+              style="width: 100%">
+             <el-table-column
+               type="index"
+               width="50">
+               </el-table-column>
+             <el-table-column
+                prop="id"
+                label="审批编号"                
+                width="180">
+             </el-table-column>
+             <el-table-column
+                prop="email"
+                label="邮箱"                
+                width="180">
+             </el-table-column>
+             <el-table-column
+                prop="part"
+                label="部门"               
+                width="130">
+             </el-table-column>
+             <el-table-column
+                prop="begindate"
+                label="休假开始时间"
+                sortable
+                width="180">
+             </el-table-column>
+             <el-table-column
+                prop="enddate"
+                label="休假结束时间"
+                sortable
+                width="180">
+             </el-table-column>
+             <el-table-column
+                prop="hours"
+                label="共计工时"               
+                width="80">
+             </el-table-column>
+             <el-table-column
+                prop="type"
+                label="请假类型"                
+                width="80">
+             </el-table-column>
+             <el-table-column
+                prop="status1"
+                label="第一审批人"                
+                width="100">
+             </el-table-column>
+             <el-table-column
+                prop="status2"
+                label="第二审批人"
+                width="100">
+             </el-table-column>
+             <el-table-column
+                prop="status3"
+                label="第三审批人"                
+                width="100">
+             </el-table-column>
+             <el-table-column
+               fixed="right"
+               label="操作"
+               width="80">
+               <template slot-scope="scope">
+                 <!--<el-button v-if="!scope.row.status1" type="primary" @click="updateData(scope.row)" round size="small">编辑</el-button> -->
+                 <el-button v-if="!scope.row.status1" type="danger" @click="deleteData(scope.row)" round size="small">删除</el-button>
+               </template>
+             </el-table-column>
+           </el-table>           
+        </div>     
+       </div>
+       <!--表单-->
+       <el-dialog title="请假申请" :visible.sync="dialogFormVisible" :close-on-click-modal=false :show-close=false>
+         <el-form :rules="rules" ref="ruleform" :model="form" label-width="160px" size="mini">
+           <el-form-item label="审批号码">
+             <el-tag>{{form.id}}</el-tag>          
+           </el-form-item> 
+           <el-form-item label="基本信息">
+             <el-tag>{{form.no}}</el-tag>    
+             <el-tag>{{form.name}}</el-tag>
+             <el-tag>{{form.part}}</el-tag>
+             <el-tag>{{form.job}}</el-tag>        
+           </el-form-item>           
+           <el-form-item label="申请人">
+             <el-tag>{{form.email}}</el-tag>            
+           </el-form-item>
+           <el-form-item label="申请日期" prop="sqDate">
+            <el-col :span="11">
+              <el-date-picker type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择日期" v-model="form.sqDate" style="width: 100%;"></el-date-picker>
+            </el-col>            
+           </el-form-item>           
+           <el-form-item label="请假事由" prop="reason">
+               <el-input v-model="form.reason"></el-input>
+           </el-form-item>
+           <el-form-item label="请假时间" required>
+             <el-col :span="8">
+               <el-form-item prop="beginDate">
+                 <el-date-picker type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择日期" v-model="form.beginDate" style="width: 100%;"></el-date-picker>
+               </el-form-item>
+             </el-col>      
+             <el-col style="margin-left:10px" :span="1">---</el-col>
+             <el-col :span="8">
+               <el-form-item prop="endDate">
+                 <el-date-picker type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择日期" v-model="form.endDate" style="width: 100%;"></el-date-picker>
+               </el-form-item>
+             </el-col>       
+           </el-form-item>
+           <el-form-item label="工时" prop="hours">
+               <el-input v-model="form.hours"></el-input>
+           </el-form-item>
+          <el-form-item label="请假类型" prop="type">
+             <el-select v-model="form.type" placeholder="请选择请假事由">
+               <el-option
+               v-for="item in typeOptions"
+               :key="item.value"
+               :label="item.label"
+               :value="item.value">
+               </el-option>
+             </el-select>
+             
+           </el-form-item>
+           <el-form-item label="附言">
+               <el-input v-model="form.other"></el-input>
+           </el-form-item>            
+         </el-form>
+
+       <div slot="footer" class="dialog-footer">
+         <el-button @click="dialogFormVisible = false">取 消</el-button>
+         <el-button type="primary" @click="save('ruleform')">保 存</el-button>
+       </div>
+     </el-dialog>
+    </div>    
+     <script>
+        var app = new Vue({
+          el: '#app',
+          data: {
+            appData: [],
+            loading: true,
+            dialogFormVisible: false,
+            form: {
+              opt: '',//1:新增，2:修改
+              id:'',
+              no: '-',
+              name: '-',
+              part: '-',
+              job: '-',
+              email: '',
+              sqDate: '',          
+              reason: '',
+              type: '',
+              beginDate: '',
+              endDate: '',
+              hours: '',
+              other: ''//附言
+            },
+            rules:{
+              sqDate:[{ required: true, message: '请选择生产日期', trigger: 'blur' }],
+              beginDate:[{ required: true, message: '请选择休假开始时间', trigger: 'blur' }],
+              endDate:[{ required: true, message: '请选择休假结束时间', trigger: 'blur' }],
+              reason:[{ required: true, message: '请填写请假事由', trigger: 'blur' }],           
+              hours:[{ required: true, message: '请填写工时', trigger: 'blur' }],  
+              type:[{ required: true, message: '请填写请假类型', trigger: 'change' }]           
+            },
+            currentPage: 4,
+            formLabelWidth: '120px',
+            typeOptions: [{
+              value: '病假',
+              label: '病假'
+            }, {
+              value: '事假',
+              label: '事假'
+            }, {
+              value: '调休',
+              label: '调休'
+            }, {
+              value: '年假',
+              label: '年假'
+            }, {
+              value: '产假',
+              label: '产假'
+            }, {
+              value: '护理假',
+              label: '护理假'
+            }, {
+              value: '婚假',
+              label: '婚假'
+            }, {
+              value: '丧假',
+              label: '丧假'
+            }, {
+              value: '工伤假',
+              label: '工伤假'
+            }, {
+              value: '其他',
+              label: '其他'
+            }]
+          },
+          mounted: function(){            
+            this.doGetData()
+          },
+          methods: {            
+            getData: function(data){
+               this.appData = data;                 
+               if (this.loading==true){this.loading = false}
+            },
+            doGetData: function(){
+               this.loading = true
+               google.script.run.withSuccessHandler(this.getData).logProductInfo()  
+               
+            },
+            save: function(f){   
+              var _self = this;              
+              _self.$refs[f].validate((valid) => {
+                if (valid) {
+                  if (this.form.opt=='1'){
+                    google.script.run.addInfo(_self.form) 
+                  } else {
+                    google.script.run.updateInfo(_self.form) 
+                  }
+                  this.$message({
+                    type: 'success',
+                    message: '申请成功，已发送邮件给审批人'
+                  });
+                  _self.dialogFormVisible = false
+                  _self.doGetData()                  
+                } else {                     
+                   return false;
+                } 
+              })
+            },
+            getActiveUser(data){
+              this.form.email = data.email  
+              this.form.no = data.no              
+              this.form.name = data.name
+              this.form.part = data.part
+              this.form.job = data.job
+              this.form.firstSpr = data.firstSpr
+              this.form.secondSpr = data.secondSpr
+              this.form.thirdSpr = data.thirdSpr
+            },
+            addData: function(){
+              this.dialogFormVisible = true;             
+              google.script.run.withSuccessHandler(this.getActiveUser).getActiveUser()   
+              this.form.opt = '1'
+              this.form.id = 'HR-'+this.appData.id
+              this.form.sqDate = ''         
+              this.form.reason= ''
+              this.form.type= ''
+              this.form.beginDate= ''
+              this.form.endDate= ''
+              this.form.hours= ''
+              this.form.other= ''
+            
+            },
+            updateData: function(item){
+              this.dialogFormVisible = true;   
+              google.script.run.withSuccessHandler(this.getActiveUser).getActiveUser()  
+              this.form.opt = '2'
+              this.form.id = item.id
+              this.form.sqDate = item.sqdate
+              this.form.reason= item.reason
+              this.form.type= item.type  
+              this.form.beginDate= item.begindate 
+              this.form.endDate= item.enddate
+              this.form.hours= item.hours   
+              this.form.other= item.other                        
+            },
+            deleteData: function(item){
+              this.$confirm('此操作将删除该记录, 是否继续?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+              type: 'warning'
+              }).then(() => {
+                google.script.run.deleteInfo(item) 
+                this.doGetData() 
+                this.$message({
+                   type: 'success',
+                    message: '删除成功!'
+                 });
+              }).catch(() => {
+                 this.$message({
+                 type: 'info',
+                    message: '已取消删除'
+                 });          
+              });          
+            }         
+          }
+         
+        })
+      </script>
+  </body>
+</html>
