@@ -4,10 +4,11 @@
     <base target="_top">
     <!-- 引入样式 -->
     <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <script src="https://cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script>
     <!--vue.js-->
     <script src="https://cdn.jsdelivr.net/npm/vue"></script>  
     <!-- 引入组件库 -->
-    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>    
     <style type="text/css">
       #wrapper{
          left:5%;
@@ -18,12 +19,21 @@
       }      
     </style>
   </head>
-  <body>
+  <body>   
     <div id="app"> 
        <div id="wrapper">
         <img src=""  />
         <div>
            <h1>本人请假/外出申请情况 <el-button type="primary" round style="position:absolute;right:0px" @click="addData">申请休假</el-button></h1> 
+        </div>
+        <div>
+           <el-tag>{{form.no}}</el-tag>    
+           <el-tag>{{form.name}}</el-tag>
+           <el-tag>{{form.email}}</el-tag> 
+           <el-tag>{{form.part}}</el-tag>
+           <el-tag>{{form.job}}</el-tag>
+           <el-tag>{{form.job}}</el-tag>
+           <el-tag>{{form.syHours}}/{{form.allHours}}</el-tag>
         </div>
         <div class="wraper-output">
             <el-table
@@ -31,7 +41,7 @@
               element-loading-text="拼命加载中"
               element-loading-spinner="el-icon-loading"
               element-loading-background="rgba(0, 0, 0, 0.8)"
-              stripe
+              stripe size="mini"
               :data="appData.data"   
               height=680
               border
@@ -43,18 +53,19 @@
              <el-table-column
                 prop="id"
                 label="审批编号"                
-                width="180">
-             </el-table-column>
-             <el-table-column
-                prop="email"
-                label="邮箱"                
-                width="180">
-             </el-table-column>
-             <el-table-column
-                prop="part"
-                label="部门"               
                 width="130">
              </el-table-column>
+             <el-table-column
+                prop="qjr"
+                label="请假人"                
+                width="130">
+             </el-table-column>
+             <el-table-column
+                prop="sqdate"
+                sortable
+                label="申请时间"                
+                width="180">
+             </el-table-column>            
              <el-table-column
                 prop="begindate"
                 label="休假开始时间"
@@ -70,12 +81,12 @@
              <el-table-column
                 prop="hours"
                 label="共计工时"               
-                width="80">
+                width="120">
              </el-table-column>
              <el-table-column
                 prop="type"
                 label="请假类型"                
-                width="80">
+                width="120">
              </el-table-column>
              <el-table-column
                 prop="status1"
@@ -93,12 +104,34 @@
                 width="100">
              </el-table-column>
              <el-table-column
+                show-overflow-tooltip="true"
+                prop="fileUrl"
+                label="文件地址"                
+                width="120">
+                <template slot-scope="scope">                 
+                 <a :href="scope.row.fileUrl"> 
+                   {{scope.row.fileUrl}}
+                 </a>
+               </template>
+             </el-table-column>
+             <el-table-column
+               fixed="right"
+               label="上传文件"
+               width="160">
+               <template slot-scope="scope">                 
+                 <form id="myForm" :ref="scope.row.id">
+                     <input type="file" name="myFile"><br/>
+                     <input type="button" id="upload" value="upload" @click="uploadFile(scope.row.id)">
+                 </form>
+               </template>
+             </el-table-column>
+             <el-table-column
                fixed="right"
                label="操作"
                width="80">
                <template slot-scope="scope">
                  <!--<el-button v-if="!scope.row.status1" type="primary" @click="updateData(scope.row)" round size="small">编辑</el-button> -->
-                 <el-button v-if="!scope.row.status1" type="danger" @click="deleteData(scope.row)" round size="small">删除</el-button>
+                 <el-button v-if="!scope.row.status1" type="danger" @click="deleteData(scope.row)" round size="mini">删除</el-button>
                </template>
              </el-table-column>
            </el-table>           
@@ -119,9 +152,21 @@
            <el-form-item label="申请人">
              <el-tag>{{form.email}}</el-tag>            
            </el-form-item>
+           <el-form-item label="请假人">
+             <el-select v-model="form.qjr" placeholder="请选择" filterable>
+             <el-option
+               v-for="item in userList"
+               :key="item.email"
+               :label="item.name"
+               :value="item.email">
+               <span style="float: left">{{ item.email }}</span>--
+               <span style="float: right; color: #8492a6; font-size: 13px">{{ item.name }}</span>
+             </el-option>
+             </el-select>     
+           </el-form-item>
            <el-form-item label="申请日期" prop="sqDate">
             <el-col :span="11">
-              <el-date-picker type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择日期" v-model="form.sqDate" style="width: 100%;"></el-date-picker>
+              <el-date-picker type="datetime" @change="sqDateChange" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择日期" v-model="form.sqDate" style="width: 100%;"></el-date-picker>
             </el-col>            
            </el-form-item>           
            <el-form-item label="请假事由" prop="reason">
@@ -156,7 +201,7 @@
            </el-form-item>
            <el-form-item label="附言">
                <el-input v-model="form.other"></el-input>
-           </el-form-item>            
+           </el-form-item>                       
          </el-form>
 
        <div slot="footer" class="dialog-footer">
@@ -179,15 +224,19 @@
               name: '-',
               part: '-',
               job: '-',
-              email: '',
+              email: '-',
+              qjr: '',
               sqDate: '',          
               reason: '',
               type: '',
               beginDate: '',
               endDate: '',
               hours: '',
-              other: ''//附言
+              other: '',//附言
+              allHours: '',
+              syHours: ''
             },
+            userList: [],
             rules:{
               sqDate:[{ required: true, message: '请选择生产日期', trigger: 'blur' }],
               beginDate:[{ required: true, message: '请选择休假开始时间', trigger: 'blur' }],
@@ -232,6 +281,8 @@
           },
           mounted: function(){            
             this.doGetData()
+            google.script.run.withSuccessHandler(this.getActiveUser).getActiveUser() 
+            google.script.run.withSuccessHandler(this.getUserList).getUserList() 
           },
           methods: {            
             getData: function(data){
@@ -240,9 +291,8 @@
             },
             doGetData: function(){
                this.loading = true
-               google.script.run.withSuccessHandler(this.getData).logProductInfo()  
-               
-            },
+               google.script.run.withSuccessHandler(this.getData).logProductInfo()                 
+            },           
             save: function(f){   
               var _self = this;              
               _self.$refs[f].validate((valid) => {
@@ -265,6 +315,7 @@
             },
             getActiveUser(data){
               this.form.email = data.email  
+              this.form.qjr = data.email  
               this.form.no = data.no              
               this.form.name = data.name
               this.form.part = data.part
@@ -272,19 +323,40 @@
               this.form.firstSpr = data.firstSpr
               this.form.secondSpr = data.secondSpr
               this.form.thirdSpr = data.thirdSpr
+              this.form.allHours = data.allHours
+              this.form.syHours = data.syHours
             },
-            addData: function(){
-              this.dialogFormVisible = true;             
-              google.script.run.withSuccessHandler(this.getActiveUser).getActiveUser()   
+            getUserList(data){             
+              this.userList = data              
+            },
+            //日期格式化成yyyy-MM-dd hh:mm:ss
+            dateFormat: function(fmt,d){          
+                var o = {
+                "M+": d.getMonth() + 1, //月份 
+                "d+": d.getDate(), //日 
+                "h+": d.getHours(), //小时 
+                "m+": d.getMinutes(), //分 
+                "s+": d.getSeconds(), //秒 
+                "q+": Math.floor((d.getMonth() + 3) / 3), //季度 
+                "S": d.getMilliseconds() //毫秒 
+                }
+                if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (d.getFullYear() + "").substr(4 - RegExp.$1.length));
+                for (var k in o)
+                if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+                return fmt;
+            },
+            addData: function(){              
+              this.dialogFormVisible = true;                             
               this.form.opt = '1'
               this.form.id = 'HR-'+this.appData.id
-              this.form.sqDate = ''         
+              this.form.sqDate = this.dateFormat('yyyy-MM-dd hh:mm:ss',new Date())   
               this.form.reason= ''
               this.form.type= ''
               this.form.beginDate= ''
               this.form.endDate= ''
               this.form.hours= ''
               this.form.other= ''
+              this.form.qjr = this.form.email  
             
             },
             updateData: function(item){
@@ -318,9 +390,34 @@
                     message: '已取消删除'
                  });          
               });          
-            }         
-          }
-         
+            },
+            sqDateChange: function(d){
+              console.log(d)
+              console.log(new Date())
+            },
+            updateFileImage: function(id,url){
+               google.script.run.setFileUrl(id,url)
+               this.doGetData()
+            },
+            uploadFile(id){    
+              var _self=this;
+              google.script.run
+              .withSuccessHandler(function(msg){
+                 _self.updateFileImage(id,msg)
+                 _self.$message({
+                   type: 'success',
+                    message: '文件上传成功!'
+                 });
+              })
+              .withFailureHandler(function(msg){
+                _self.$message({
+                   type: 'error',
+                    message: '文件上传失败!'
+                 });
+              })               
+               .uploadFiles(this.$refs[id]); 
+              }
+           }        
         })
       </script>
   </body>

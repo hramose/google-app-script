@@ -106,8 +106,24 @@ function getActiveUser(){
       r.firstSpr = user_data[i][5] 
       r.secondSpr = user_data[i][6] 
       r.thirdSpr = user_data[i][7] 
+      r.allHours = user_data[i][8] 
+      r.syHours = user_data[i][9] 
       break;
     }
+  }  
+  return r;
+}
+
+//获取所有用户列表
+function getUserList(){
+  var sheet = SpreadsheetApp.getActiveSpreadsheet();
+  var user_data = sheet.getSheets()[0].getDataRange().getValues();
+  var r = [];
+   for (var i =1; i<user_data.length;i++){
+     r.push({
+       email: user_data[i][0],     
+       name: user_data[i][2] 
+     });   
   }  
   return r;
 }
@@ -155,17 +171,19 @@ function logProductInfo() {
       r.data.push({
         id: data[i][0],
         email: data[i][1],
-        sqdate: dateFormat(data[i][2]),
-        part: user_part,
-        begindate: dateFormat(data[i][3]),
-        enddate: dateFormat(data[i][4]),
-        hours:data[i][5],
-        reason:data[i][6],
-        type:data[i][7],        
-        other:data[i][8],
-        status1:data[i][9],
-        status2:data[i][10],
-        status3:data[i][11]
+        qjr: data[i][2],
+        part:  data[i][3],
+        sqdate: dateFormat(data[i][4]),        
+        begindate: dateFormat(data[i][5]),
+        enddate: dateFormat(data[i][6]),
+        hours:data[i][7],
+        reason:data[i][8],
+        type:data[i][9],        
+        other:data[i][10],
+        status1:data[i][11],
+        status2:data[i][12],
+        status3:data[i][13],
+        fileUrl:data[i][14]
       }); 
     } 
   }
@@ -176,8 +194,23 @@ function logProductInfo() {
 //提交请假申请
 function addInfo(data){
   var sheet = SpreadsheetApp.getActiveSpreadsheet();
-  sheet.getSheets()[1].appendRow([data.id,data.email,data.sqDate,data.beginDate,data.endDate,data.hours,data.reason,data.type,data.other?data.other:'']); 
+  sheet.getSheets()[1].appendRow([data.id,data.email,data.qjr,data.part,data.sqDate,data.beginDate,data.endDate,data.hours,data.reason,data.type,data.other?data.other:'']); 
   sendEmail(data.id,data.name,data.firstSpr,data.secondSpr,data.thirdSpr,0, data.beginDate,data.endDate,data.hours,data.reason,data.type)
+  //修改员工表里的剩余工时
+  var r = sheet.getSheets()[0].getDataRange().getValues();
+  for (var i=1; i<r.length;i++){
+     if (r[i][0]==data.qjr){
+       var allHours = parseInt(r[i][8]);
+       var syHours = parseInt(r[i][9]);
+       var hours = parseInt(data.hours);
+       if (isNaN(allHours)){allHours=0}
+       if (isNaN(syHours)){syHours=0}
+       if (isNaN(hours)){hours=0}
+       sheet.getSheets()[0].getRange("I"+(i+1)).setValue(allHours-hours); 
+       sheet.getSheets()[0].getRange("J"+(i+1)).setValue(syHours+hours);       
+       break;
+     }
+  } 
 }
 
 //编辑请假申请
@@ -230,4 +263,43 @@ function setAppStatus(id, count, pass){
       break;
     }
   }
+}
+
+//修改文件url
+function setFileUrl(id, url){
+  var sheet = SpreadsheetApp.getActiveSpreadsheet();
+  var data = sheet.getSheets()[1].getDataRange().getValues();  
+  for (var i=1; i<data.length;i++){   
+    if (data[i][0]==id){           
+      sheet.getSheets()[1].getRange("O"+(i+1)).setValue(url);        
+      break;
+    }
+  }
+}
+
+function uploadFiles(form) {
+  
+  try {   
+    var dropbox = "images"; 
+    //----------------------------------------------
+    var folder, folders = DriveApp.getFoldersByName(dropbox);
+    
+    if (folders.hasNext()) {
+      folder = folders.next();
+    } else {
+      folder = DriveApp.createFolder(dropbox);
+    }
+    
+    var blob = form.myFile;   
+    Logger.log(form)
+    var file = folder.createFile(blob);    
+    file.setDescription("上传者： " + form.myName);
+    Logger.log("成功")
+    return file.getUrl()
+    
+  } catch (error) {
+    
+    return error.toString();
+  }
+  
 }
