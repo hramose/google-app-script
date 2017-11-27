@@ -165,25 +165,68 @@
              </el-select>     
            </el-form-item>
            <el-form-item label="申请日期" prop="sqDate">
-            <el-col :span="11">
-              <el-date-picker type="datetime" @change="sqDateChange" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择日期" v-model="form.sqDate" style="width: 100%;"></el-date-picker>
-            </el-col>            
+           <el-row>
+            <el-col :span="6">
+              <el-date-picker @change="sqDateChange" value-format="yyyy-MM-dd" placeholder="选择日期" v-model="form.sqDate" style="width: 100%;float:left"></el-date-picker>
+            </el-col> 
+            <el-col :span="5">
+              <el-time-select
+                placeholder="选择时间"
+                v-model="form.sqTime"
+                :picker-options="{
+                start: '08:00',
+                step: '00:30',
+                end: '18:00'
+              }">
+              </el-time-select>
+            </el-col>    
+            </el-row>
            </el-form-item>           
            <el-form-item label="请假事由" prop="reason">
                <el-input v-model="form.reason"></el-input>
            </el-form-item>
            <el-form-item label="请假时间" required>
-             <el-col :span="8">
+             
                <el-form-item prop="beginDate">
-                 <el-date-picker type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择日期" v-model="form.beginDate" style="width: 100%;"></el-date-picker>
+                 <el-row>
+                  <el-col :span="7">
+                   <el-date-picker value-format="yyyy-MM-dd" placeholder="选择日期" v-model="form.beginDate" style="width: 100%;"></el-date-picker>                                               
+                 </el-col> 
+                 <el-col :span="4">
+                   <el-time-select
+                    placeholder="选择时间"
+                    v-model="form.beginTime"
+                   :picker-options="{
+                   start: '08:00',
+                   step: '00:30',
+                   end: '18:00'
+                   }">
+                  </el-time-select>
+                 </el-col>    
+                </el-row>
                </el-form-item>
-             </el-col>      
-             <el-col style="margin-left:10px" :span="1">---</el-col>
-             <el-col :span="8">
+                
+             
+                           
                <el-form-item prop="endDate">
-                 <el-date-picker type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择日期" v-model="form.endDate" style="width: 100%;"></el-date-picker>
+                 <el-row>
+                  <el-col :span="7">
+                   <el-date-picker value-format="yyyy-MM-dd" placeholder="选择日期" v-model="form.endDate" style="width: 100%;"></el-date-picker>                                          
+                 </el-col> 
+                 <el-col :span="4">
+                   <el-time-select
+                    placeholder="选择时间"
+                    v-model="form.endTime"
+                   :picker-options="{
+                   start: '08:00',
+                   step: '00:30',
+                   end: '18:00'
+                   }">
+                  </el-time-select>
+                 </el-col>    
+                </el-row>
                </el-form-item>
-             </el-col>       
+                   
            </el-form-item>
            <el-form-item label="工时" prop="hours">
                <el-input v-model="form.hours"></el-input>
@@ -226,11 +269,14 @@
               job: '-',
               email: '-',
               qjr: '',
-              sqDate: '',          
+              sqDate: '', 
+              sqTime: '',
               reason: '',
               type: '',
               beginDate: '',
+              beginTime: '',
               endDate: '',
+              endTime: '',
               hours: '',
               other: '',//附言
               allHours: '',
@@ -277,7 +323,7 @@
             }, {
               value: '其他',
               label: '其他'
-            }]
+            }]           
           },
           mounted: function(){            
             this.doGetData()
@@ -294,9 +340,13 @@
                google.script.run.withSuccessHandler(this.getData).logProductInfo()                 
             },           
             save: function(f){   
-              var _self = this;              
+              var _self = this;               
               _self.$refs[f].validate((valid) => {
                 if (valid) {
+                  //处理时间                  
+                  _self.form.sqDate =_self.dateFormat('yyyy-MM-dd hh:mm:ss', new Date(_self.form.sqDate+' '+_self.form.sqTime))  
+                  _self.form.beginDate =_self.dateFormat('yyyy-MM-dd hh:mm:ss', new Date(_self.form.beginDate+' '+_self.form.beginTime))  
+                  _self.form.endDate =_self.dateFormat('yyyy-MM-dd hh:mm:ss', new Date(_self.form.endDate+' '+_self.form.endTime))  
                   if (this.form.opt=='1'){
                     google.script.run.addInfo(_self.form) 
                   } else {
@@ -349,11 +399,14 @@
               this.dialogFormVisible = true;                             
               this.form.opt = '1'
               this.form.id = 'HR-'+this.appData.id
-              this.form.sqDate = this.dateFormat('yyyy-MM-dd hh:mm:ss',new Date())   
+              this.form.sqDate = this.dateFormat('yyyy-MM-dd',new Date()) 
+              this.form.sqTime = ''
               this.form.reason= ''
               this.form.type= ''
               this.form.beginDate= ''
+              this.form.beginTime= ''
               this.form.endDate= ''
+              this.form.endTime= ''
               this.form.hours= ''
               this.form.other= ''
               this.form.qjr = this.form.email  

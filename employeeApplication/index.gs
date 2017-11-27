@@ -14,6 +14,8 @@ function doGet(e) {
     var hours = parameters.hours;
     var reason = parameters.reason;
     var type = parameters.type;
+    var qjr = parameters.qjr;
+    var qjrname = parameters.qjrname;
         
     Logger.log("idFrom:"+idFrom)
     Logger.log("nameFrom:"+nameFrom)
@@ -25,12 +27,14 @@ function doGet(e) {
     Logger.log("hours:"+hours)
     Logger.log("reason:"+reason)
     Logger.log("type:"+type)
+    Logger.log("qjr:"+qjr)
+    Logger.log("qjrname:"+qjrname)
     
     Logger.log("parameters:"+parameters)
     if (idFrom){
       var _pass = pass=='1'?"通过":"拒绝"
       setAppStatus(idFrom, count, _pass)
-      sendEmail(idFrom,nameFrom,firstSendTo,secondSendTo,thirdSendTo,count, begindate,enddate,hours,reason,type)      
+      sendEmail(idFrom,nameFrom,firstSendTo,secondSendTo,thirdSendTo,count, begindate,enddate,hours,reason,type,qjr,qjrname)      
       return HtmlService.createHtmlOutput("你"+_pass+"申请了！");
     }     
   } 
@@ -44,7 +48,7 @@ function doGet(e) {
 //secondSendTo：第二审批人邮箱
 //thirdSendTo：第三审批人邮箱
 //count：当前事第几次发送邮件
-function sendEmail(idFrom,nameFrom,firstSendTo,secondSendTo,thirdSendTo,count, begindate,enddate,hours,reason,type) {
+function sendEmail(idFrom,nameFrom,firstSendTo,secondSendTo,thirdSendTo,count, begindate,enddate,hours,reason,type,qjr,qjrname) {
   Logger.log("sendEmail")
    var _count=parseInt(count)+1
    var _href = "href='https://script.google.com/macros/s/AKfycbyJMJkalBj5VpUqCSHH_g5ou1bdSO8Vo5SYiXUh3nQ/dev?"+
@@ -58,11 +62,14 @@ function sendEmail(idFrom,nameFrom,firstSendTo,secondSendTo,thirdSendTo,count, b
                   "&enddate="+enddate+
                   "&hours="+hours+
                   "&reason="+reason+
-                  "&type="+type
+                  "&type="+type+
+                  "&qjr="+qjr+
+                  "&qjrname="+qjrname
    var _approve = "&pass=1"
    var _reject  = "&pass=0"                   
    var htmlBody = "<span style='color:red'>请假申请</span><br>"+
-                  "<span>姓名：</span>"+nameFrom+"<br>"+
+                  "<span>申请人姓名：</span>"+nameFrom+"<br>"+
+                  "<span>请假人姓名：</span>"+qjrname+"<br>"+
                   "<span>开始时间：</span>"+begindate+"<br>"+
                   "<span>结束时间：</span>"+enddate+"<br>"+
                   "<span>工时：</span>"+hours+"<br>"+
@@ -98,6 +105,29 @@ function getActiveUser(){
   var r = {};
    for (var i =1; i<user_data.length;i++){
     if (user_data[i][0]==login_user){
+      r.email = user_data[i][0]
+      r.no = user_data[i][1]      
+      r.name = user_data[i][2] 
+      r.part = user_data[i][3] 
+      r.job = user_data[i][4] 
+      r.firstSpr = user_data[i][5] 
+      r.secondSpr = user_data[i][6] 
+      r.thirdSpr = user_data[i][7] 
+      r.allHours = user_data[i][8] 
+      r.syHours = user_data[i][9] 
+      break;
+    }
+  }  
+  return r;
+}
+
+//根据ID获取用户的信息
+function getUserById(id){
+  var sheet = SpreadsheetApp.getActiveSpreadsheet();
+  var user_data = sheet.getSheets()[0].getDataRange().getValues();
+  var r = {};
+   for (var i =1; i<user_data.length;i++){
+    if (user_data[i][0]==id){
       r.email = user_data[i][0]
       r.no = user_data[i][1]      
       r.name = user_data[i][2] 
@@ -195,7 +225,8 @@ function logProductInfo() {
 function addInfo(data){
   var sheet = SpreadsheetApp.getActiveSpreadsheet();
   sheet.getSheets()[1].appendRow([data.id,data.email,data.qjr,data.part,data.sqDate,data.beginDate,data.endDate,data.hours,data.reason,data.type,data.other?data.other:'']); 
-  sendEmail(data.id,data.name,data.firstSpr,data.secondSpr,data.thirdSpr,0, data.beginDate,data.endDate,data.hours,data.reason,data.type)
+  var s = getUserById(data.qjr)
+  sendEmail(data.id,data.name,data.firstSpr,data.secondSpr,data.thirdSpr,0, data.beginDate,data.endDate,data.hours,data.reason,data.type,s.email,s.name)
   //修改员工表里的剩余工时
   var r = sheet.getSheets()[0].getDataRange().getValues();
   for (var i=1; i<r.length;i++){
@@ -206,7 +237,6 @@ function addInfo(data){
        if (isNaN(allHours)){allHours=0}
        if (isNaN(syHours)){syHours=0}
        if (isNaN(hours)){hours=0}
-       sheet.getSheets()[0].getRange("I"+(i+1)).setValue(allHours-hours); 
        sheet.getSheets()[0].getRange("J"+(i+1)).setValue(syHours+hours);       
        break;
      }
@@ -254,11 +284,11 @@ function setAppStatus(id, count, pass){
       Logger.log("status:"+data[i][0])
        Logger.log("iii:"+i)
       if (count==1){
-        sheet.getSheets()[1].getRange("J"+(i+1)).setValue(pass); 
-      } else if (count==2){
-        sheet.getSheets()[1].getRange("K"+(i+1)).setValue(pass); 
-      } else if (count == 3){
         sheet.getSheets()[1].getRange("L"+(i+1)).setValue(pass); 
+      } else if (count==2){
+        sheet.getSheets()[1].getRange("M"+(i+1)).setValue(pass); 
+      } else if (count == 3){
+        sheet.getSheets()[1].getRange("N"+(i+1)).setValue(pass); 
       }      
       break;
     }
