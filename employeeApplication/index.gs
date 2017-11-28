@@ -33,7 +33,7 @@ function doGet(e) {
     Logger.log("parameters:"+parameters)
     if (idFrom){
       var _pass = pass=='1'?"通过":"拒绝"
-      setAppStatus(idFrom, count, _pass, qjr, hours)
+      setAppStatus(idFrom, count, _pass, qjr, hours, type)
       sendEmail(idFrom,nameFrom,firstSendTo,secondSendTo,thirdSendTo,count, begindate,enddate,hours,reason,type,qjr,qjrname)      
       return HtmlService.createHtmlOutput("你"+_pass+"申请了！");
     }     
@@ -281,7 +281,7 @@ function deleteInfo(d){
 }
 
 //修改审批状态
-function setAppStatus(id, count, pass, qjr, hours){
+function setAppStatus(id, count, pass, qjr, hours, type){
   var sheet = SpreadsheetApp.getActiveSpreadsheet();
   var data = sheet.getSheets()[1].getDataRange().getValues();  
   for (var i=1; i<data.length;i++){   
@@ -295,7 +295,7 @@ function setAppStatus(id, count, pass, qjr, hours){
       } else if (count == 3){
         sheet.getSheets()[1].getRange("N"+(i+1)).setValue(pass); 
         //修改工时
-        if (pass=='通过'){
+        if (pass=='通过' && type=='年假'){
           updateGongShi(qjr, hours)
         }
       }      
