@@ -148,12 +148,22 @@ function getUserById(id){
 function getUserList(){
   var sheet = SpreadsheetApp.getActiveSpreadsheet();
   var user_data = sheet.getSheets()[0].getDataRange().getValues();
+  var login_user=Session.getActiveUser().getEmail();
   var r = [];
-   for (var i =1; i<user_data.length;i++){
-     r.push({
-       email: user_data[i][0],     
-       name: user_data[i][2] 
-     });   
+  for (var i =1; i<user_data.length;i++){
+    if (user_data[i][0]==login_user){
+     
+      r.part = user_data[i][3] 
+      for (var j =1; j<user_data.length;j++){
+        if (user_data[i][3]== user_data[j][3]){
+          r.push({
+            email: user_data[j][0],     
+            name: user_data[j][2] 
+          });   
+         }               
+      }    
+      break;
+    }
   }  
   return r;
 }
@@ -218,6 +228,7 @@ function logProductInfo() {
     } 
   }
   r.id = id?parseInt(id)+1:20180001
+  console.log(r)
   return r
 }
 
@@ -236,12 +247,15 @@ function updateGongShi(qjr,hours){
   var r = sheet.getSheets()[0].getDataRange().getValues();
   for (var i=1; i<r.length;i++){
      if (r[i][0]==qjr){
-       var allHours = parseInt(r[i][8]);
-       var syHours = parseInt(r[i][9]);
-       var _hours = parseInt(hours);
+       var allHours = parseFloat(r[i][8]);
+       var syHours = parseFloat(r[i][9]);
+       var _hours = parseFloat(hours);
        if (isNaN(allHours)){allHours=0}
        if (isNaN(syHours)){syHours=0}
        if (isNaN(_hours)){_hours=0}
+       Logger.log(syHours)
+       Logger.log(hours)
+       Logger.log(syHours-hours)
        sheet.getSheets()[0].getRange("J"+(i+1)).setValue(syHours-hours);       
        break;
      }
