@@ -32,7 +32,6 @@
            <el-tag>{{form.email}}</el-tag> 
            <el-tag>{{form.part}}</el-tag>
            <el-tag>{{form.job}}</el-tag>
-           <el-tag>{{form.job}}</el-tag>
            <el-tag>{{form.syHours}}/{{form.allHours}}</el-tag>
         </div>
         <div class="wraper-output">
@@ -165,22 +164,9 @@
              </el-select>     
            </el-form-item>
            <el-form-item label="申请日期" prop="sqDate">
-           <el-row>
-            <el-col :span="6">
-              <el-date-picker @change="sqDateChange" value-format="yyyy-MM-dd" placeholder="选择日期" v-model="form.sqDate" style="width: 100%;float:left"></el-date-picker>
-            </el-col> 
-            <el-col :span="5">
-              <el-time-select
-                placeholder="选择时间"
-                v-model="form.sqTime"
-                :picker-options="{
-                start: '08:00',
-                step: '00:30',
-                end: '18:00'
-              }">
-              </el-time-select>
-            </el-col>    
-            </el-row>
+             <el-col :span="11">
+               <el-date-picker type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择日期" v-model="form.sqDate" style="width: 100%;"></el-date-picker>
+             </el-col> 
            </el-form-item>           
            <el-form-item label="请假事由" prop="reason">
                <el-input v-model="form.reason"></el-input>
@@ -197,7 +183,7 @@
                     placeholder="选择时间"
                     v-model="form.beginTime"
                    :picker-options="{
-                   start: '08:00',
+                   start: '08:30',
                    step: '00:30',
                    end: '18:00'
                    }">
@@ -218,7 +204,7 @@
                     placeholder="选择时间"
                     v-model="form.endTime"
                    :picker-options="{
-                   start: '08:00',
+                   start: '08:30',
                    step: '00:30',
                    end: '18:00'
                    }">
@@ -343,8 +329,7 @@
               var _self = this;               
               _self.$refs[f].validate((valid) => {
                 if (valid) {
-                  //处理时间                  
-                  _self.form.sqDate =_self.dateFormat('yyyy-MM-dd hh:mm:ss', new Date(_self.form.sqDate+' '+_self.form.sqTime))  
+                  //处理时间                                   )  
                   _self.form.beginDate =_self.dateFormat('yyyy-MM-dd hh:mm:ss', new Date(_self.form.beginDate+' '+_self.form.beginTime))  
                   _self.form.endDate =_self.dateFormat('yyyy-MM-dd hh:mm:ss', new Date(_self.form.endDate+' '+_self.form.endTime))  
                   if (this.form.opt=='1'){
@@ -399,7 +384,7 @@
               this.dialogFormVisible = true;                             
               this.form.opt = '1'
               this.form.id = 'HR-'+this.appData.id
-              this.form.sqDate = this.dateFormat('yyyy-MM-dd',new Date()) 
+              this.form.sqDate = this.dateFormat('yyyy-MM-dd hh:mm:ss',new Date()) 
               this.form.sqTime = ''
               this.form.reason= ''
               this.form.type= ''
@@ -443,11 +428,7 @@
                     message: '已取消删除'
                  });          
               });          
-            },
-            sqDateChange: function(d){
-              console.log(d)
-              console.log(new Date())
-            },
+            },          
             updateFileImage: function(id,url){
                google.script.run.setFileUrl(id,url)
                this.doGetData()

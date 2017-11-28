@@ -33,7 +33,7 @@ function doGet(e) {
     Logger.log("parameters:"+parameters)
     if (idFrom){
       var _pass = pass=='1'?"通过":"拒绝"
-      setAppStatus(idFrom, count, _pass)
+      setAppStatus(idFrom, count, _pass, qjr, hours)
       sendEmail(idFrom,nameFrom,firstSendTo,secondSendTo,thirdSendTo,count, begindate,enddate,hours,reason,type,qjr,qjrname)      
       return HtmlService.createHtmlOutput("你"+_pass+"申请了！");
     }     
@@ -227,17 +227,22 @@ function addInfo(data){
   sheet.getSheets()[1].appendRow([data.id,data.email,data.qjr,data.part,data.sqDate,data.beginDate,data.endDate,data.hours,data.reason,data.type,data.other?data.other:'']); 
   var s = getUserById(data.qjr)
   sendEmail(data.id,data.name,data.firstSpr,data.secondSpr,data.thirdSpr,0, data.beginDate,data.endDate,data.hours,data.reason,data.type,s.email,s.name)
+}
+
+//修改工时
+function updateGongShi(qjr,hours){
+  var sheet = SpreadsheetApp.getActiveSpreadsheet();     
   //修改员工表里的剩余工时
   var r = sheet.getSheets()[0].getDataRange().getValues();
   for (var i=1; i<r.length;i++){
-     if (r[i][0]==data.qjr){
+     if (r[i][0]==qjr){
        var allHours = parseInt(r[i][8]);
        var syHours = parseInt(r[i][9]);
-       var hours = parseInt(data.hours);
+       var _hours = parseInt(hours);
        if (isNaN(allHours)){allHours=0}
        if (isNaN(syHours)){syHours=0}
-       if (isNaN(hours)){hours=0}
-       sheet.getSheets()[0].getRange("J"+(i+1)).setValue(syHours+hours);       
+       if (isNaN(_hours)){_hours=0}
+       sheet.getSheets()[0].getRange("J"+(i+1)).setValue(syHours-hours);       
        break;
      }
   } 
@@ -276,7 +281,7 @@ function deleteInfo(d){
 }
 
 //修改审批状态
-function setAppStatus(id, count, pass){
+function setAppStatus(id, count, pass, qjr, hours){
   var sheet = SpreadsheetApp.getActiveSpreadsheet();
   var data = sheet.getSheets()[1].getDataRange().getValues();  
   for (var i=1; i<data.length;i++){   
@@ -289,6 +294,10 @@ function setAppStatus(id, count, pass){
         sheet.getSheets()[1].getRange("M"+(i+1)).setValue(pass); 
       } else if (count == 3){
         sheet.getSheets()[1].getRange("N"+(i+1)).setValue(pass); 
+        //修改工时
+        if (pass=='通过'){
+          updateGongShi(qjr, hours)
+        }
       }      
       break;
     }
