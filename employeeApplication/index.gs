@@ -31,11 +31,16 @@ function doGet(e) {
     Logger.log("qjrname:"+qjrname)
     
     Logger.log("parameters:"+parameters)
+    
     if (idFrom){
-      var _pass = pass=='1'?"通过":"拒绝"
+      var _pass = pass=='1'?"通过":"拒绝"   
       setAppStatus(idFrom, count, _pass, qjr, hours, type)
-      sendEmail(idFrom,nameFrom,firstSendTo,secondSendTo,thirdSendTo,count, begindate,enddate,hours,reason,type,qjr,qjrname)      
-      return HtmlService.createHtmlOutput("你"+_pass+"申请了！");
+      if (pass=='1'){        
+        sendEmail(idFrom,nameFrom,firstSendTo,secondSendTo,thirdSendTo,count, begindate,enddate,hours,reason,type,qjr,qjrname)  
+        return HtmlService.createHtmlOutput("你"+_pass+"申请了！");
+      } else{
+        return HtmlService.createHtmlOutputFromFile('reject');
+      }
     }     
   } 
   return HtmlService.createHtmlOutputFromFile('Index');
@@ -312,6 +317,27 @@ function setAppStatus(id, count, pass, qjr, hours, type){
         if (pass=='通过' && type=='年假'){
           updateGongShi(qjr, hours)
         }
+      }      
+      break;
+    }
+  }
+}
+
+//拒绝原因
+function setRejectReason(id, count, reason){
+  Logger.log(id)
+  Logger.log(count)
+  Logger.log(reason)
+  var sheet = SpreadsheetApp.getActiveSpreadsheet();
+  var data = sheet.getSheets()[1].getDataRange().getValues();  
+  for (var i=1; i<data.length;i++){   
+    if (data[i][0]==id){      
+      if (count==1){
+        sheet.getSheets()[1].getRange("L"+(i+1)).setValue(reason); 
+      } else if (count==2){
+        sheet.getSheets()[1].getRange("M"+(i+1)).setValue(reason); 
+      } else if (count == 3){
+        sheet.getSheets()[1].getRange("N"+(i+1)).setValue(reason);         
       }      
       break;
     }

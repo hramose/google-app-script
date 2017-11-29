@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <script src="https://cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script>
+    <!--vue.js-->
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>  
+    <!-- 引入组件库 -->
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>    
+    <script>
+    google.script.run
+    </script>
+  </head>
+  <body>
+      <div id="app"> 
+         <p>你拒绝了休假申请：<br></p>
+         <p>申请人：<el-tag>{{obj.nameFrom[0]}}</el-tag></p>
+         <p>请假人：<el-tag>{{obj.qjrname[0]}}</el-tag></p>
+         <p>
+           拒绝原因：<el-input v-model="reason" style="width:500px"></el-input>
+            <el-button type="primary" @click="setRejectReason()">确定</el-button>   
+         </p>
+      </div>
+      
+      <script>
+        var app = new Vue({
+          el: '#app',
+          data: {
+           reason: '',
+           obj: {}
+          },
+          mounted: function(){            
+            var _self=this;
+            google.script.url.getLocation(function(location) {
+              _self.obj = location.parameters           
+            });
+          },
+          methods: {            
+            setRejectReason: function(){
+              var id = this.obj.idFrom[0]
+              var count = this.obj.count[0]     
+              console.log(id)
+              console.log(count)
+              console.log(this.reason)
+              google.script.run.setRejectReason(id,count,this.reason) 
+              this.$message({
+                    type: 'success',
+                    message: '操作成功'
+                  });
+            }
+          }        
+        })
+      </script>
+  </body>
+</html>
+
