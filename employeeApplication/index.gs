@@ -328,16 +328,17 @@ function setRejectReason(id, count, reason){
   Logger.log(id)
   Logger.log(count)
   Logger.log(reason)
+  var text="¾Ü¾ø£º"+reason
   var sheet = SpreadsheetApp.getActiveSpreadsheet();
   var data = sheet.getSheets()[1].getDataRange().getValues();  
   for (var i=1; i<data.length;i++){   
     if (data[i][0]==id){      
       if (count==1){
-        sheet.getSheets()[1].getRange("L"+(i+1)).setValue(reason); 
+        sheet.getSheets()[1].getRange("L"+(i+1)).setValue(text); 
       } else if (count==2){
-        sheet.getSheets()[1].getRange("M"+(i+1)).setValue(reason); 
+        sheet.getSheets()[1].getRange("M"+(i+1)).setValue(text); 
       } else if (count == 3){
-        sheet.getSheets()[1].getRange("N"+(i+1)).setValue(reason);         
+        sheet.getSheets()[1].getRange("N"+(i+1)).setValue(text);         
       }      
       break;
     }

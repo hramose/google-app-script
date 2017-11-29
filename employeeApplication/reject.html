@@ -18,9 +18,12 @@
          <p>你拒绝了休假申请：<br></p>
          <p>申请人：<el-tag>{{obj.nameFrom[0]}}</el-tag></p>
          <p>请假人：<el-tag>{{obj.qjrname[0]}}</el-tag></p>
-         <p>
+         <p v-if="status=='1'">
            拒绝原因：<el-input v-model="reason" style="width:500px"></el-input>
             <el-button type="primary" @click="setRejectReason()">确定</el-button>   
+         </p>
+         <p v-else>
+           <el-tag type="success">已经成功拒绝休假请求</el-tag>
          </p>
       </div>
       
@@ -29,7 +32,8 @@
           el: '#app',
           data: {
            reason: '',
-           obj: {}
+           obj: {},
+           status: '1'
           },
           mounted: function(){            
             var _self=this;
@@ -39,12 +43,20 @@
           },
           methods: {            
             setRejectReason: function(){
+              if (!this.reason){
+                 this.$message({
+                    type: 'error',
+                    message: '拒绝原因不能为空'
+                  });
+                return
+              }
               var id = this.obj.idFrom[0]
               var count = this.obj.count[0]     
               console.log(id)
               console.log(count)
               console.log(this.reason)
               google.script.run.setRejectReason(id,count,this.reason) 
+              this.status = '2'
               this.$message({
                     type: 'success',
                     message: '操作成功'
